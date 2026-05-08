@@ -4,14 +4,19 @@ import { getFirestore } from 'firebase/firestore';
 import firebaseConfigRaw from '../../firebase-applet-config.json';
 
 const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (firebaseConfigRaw as any).apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (firebaseConfigRaw as any).authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (firebaseConfigRaw as any).projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (firebaseConfigRaw as any).storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (firebaseConfigRaw as any).messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || (firebaseConfigRaw as any).appId,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigRaw.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigRaw.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigRaw.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigRaw.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigRaw.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigRaw.appId,
   firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigRaw as any).firestoreDatabaseId
 };
+
+// Diagnostic check (Safe to log keys prefix only)
+if (!config.apiKey || config.apiKey.includes('YOUR_') || config.apiKey === 'undefined') {
+  console.error('Firebase API Key is missing or invalid. Please check your Environment Variables in Vercel.');
+}
 
 const app = initializeApp(config);
 export const db = getFirestore(app, config.firestoreDatabaseId);
