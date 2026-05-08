@@ -28,7 +28,11 @@ export function SunTracker({ location, weather, qualityScore }: SunTrackerProps)
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
     const s = diff % 60;
-    return `${h > 0 ? h + 'h ' : ''}${m}m ${s}s`;
+    
+    if (h > 0) {
+      return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+    }
+    return `${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
   }, [now, times]);
 
   const isGoldenHour = useMemo(() => {
@@ -80,7 +84,7 @@ export function SunTracker({ location, weather, qualityScore }: SunTrackerProps)
 
         <div className="flex flex-col items-center text-center relative z-10">
           <span className="text-stone-400 text-sm font-medium uppercase tracking-widest mb-1">Countdown to Sunset</span>
-          <h2 className="text-5xl font-serif font-black text-glow tabular-nums mb-8">
+          <h2 className="text-5xl font-mono font-black text-glow tabular-nums mb-8 tracking-tighter">
             {countdown}
           </h2>
 
