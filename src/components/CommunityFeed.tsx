@@ -190,21 +190,42 @@ export function CommunityFeed() {
             </div>
 
             <div className="space-y-6 flex-1 overflow-y-auto pb-8">
-              <div className="aspect-square rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center justify-center text-stone-500 overflow-hidden relative">
+              <div 
+                onClick={() => document.getElementById('photo-upload')?.click()}
+                className="aspect-square rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center justify-center text-stone-500 overflow-hidden relative cursor-pointer hover:bg-white/10 transition-colors group"
+              >
                 {newPost.photo_url ? (
-                  <img src={newPost.photo_url} alt="Preview" className="w-full h-full object-cover" />
+                  <>
+                    <img src={newPost.photo_url} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <p className="text-white text-xs font-bold uppercase tracking-widest">Change Photo</p>
+                    </div>
+                  </>
                 ) : (
                   <>
-                    <ImageIcon className="w-12 h-12 mb-2" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Select Photo</span>
-                    <input 
-                      type="text" 
-                      placeholder="Paste image URL for demo..." 
-                      className="mt-4 px-4 py-2 bg-white/10 rounded-full text-xs w-3/4 text-center focus:outline-none"
-                      onChange={(e) => setNewPost(prev => ({ ...prev, photo_url: e.target.value }))}
-                    />
+                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <ImageIcon className="w-8 h-8 text-stone-400" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest text-stone-400">Select Photo</span>
+                    <p className="text-[10px] text-stone-600 mt-2">Tap to browse your device</p>
                   </>
                 )}
+                <input 
+                  id="photo-upload"
+                  type="file" 
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setNewPost(prev => ({ ...prev, photo_url: reader.result as string }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
               </div>
 
               <div className="space-y-2">
