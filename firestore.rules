@@ -49,7 +49,7 @@ service cloud.firestore {
           && data.created_at == request.time;
     }
 
-    function isValidPost(data) {
+    function isValidPost(data, isCreate) {
       return data.user_id == request.auth.uid
           && data.username is string
           && data.photo_url is string && data.photo_url.size() <= 1000
@@ -64,7 +64,7 @@ service cloud.firestore {
           && data.sunset_time is string // Or timestamp
           && data.likes_count is int && data.likes_count >= 0
           && data.comments_count is int && data.comments_count >= 0
-          && data.created_at == request.time;
+          && (isCreate ? data.created_at == request.time : true);
     }
 
     function isValidLike(data) {
@@ -151,10 +151,10 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read: if true;
-      allow create: if isSignedIn() && isValidPost(incoming());
+      allow create: if isSignedIn() && isValidPost(incoming(), true);
       allow update: if isSignedIn() && (
         isAdmin() || (
-          isOwner(existing().user_id) && isValidPost(incoming())
+          isOwner(existing().user_id) && isValidPost(incoming(), false)
           && incoming().user_id == existing().user_id
           && incoming().created_at == existing().created_at
           && incoming().diff(existing()).affectedKeys().hasOnly(['caption', 'mood', 'likes_count', 'comments_count'])

@@ -4,8 +4,21 @@ import { getFirestore } from 'firebase/firestore';
 import firebaseConfigRaw from '../../firebase-applet-config.json';
 
 const getValidEnv = (val: any) => {
-  if (typeof val === 'string' && val !== '' && val !== 'undefined' && val !== 'null') {
-    return val;
+  if (typeof val === 'string') {
+    let clean = val.trim();
+    // Strip surrounding quotes if present
+    if ((clean.startsWith('"') && clean.endsWith('"')) || (clean.startsWith("'") && clean.endsWith("'"))) {
+      clean = clean.slice(1, -1).trim();
+    }
+    if (
+      clean !== '' && 
+      clean !== 'undefined' && 
+      clean !== 'null' && 
+      !clean.includes('YOUR_') &&
+      clean.length >= 10
+    ) {
+      return clean;
+    }
   }
   return null;
 };
@@ -20,9 +33,18 @@ const config = {
   firestoreDatabaseId: getValidEnv(import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID) || (firebaseConfigRaw as any).firestoreDatabaseId
 };
 
-// Diagnostic check (Safe to log keys prefix only)
-if (!config.apiKey || config.apiKey.includes('YOUR_') || config.apiKey === 'undefined') {
-  console.error('Firebase API Key is missing or invalid. Please check your Environment Variables in Vercel.');
+// Diagnostic check
+if (!config.apiKey || config.apiKey === 'undefined') {
+  console.error('Firebase API Key is missing. Environment variables starting with VITE_ must be set in your deployment platform (e.g. Vercel) and the app must be redeployed.');
+} else if (config.apiKey.length < 10) {
+  console.error('Firebase API Key is invalid (too short). Even the fallback config seems broken.');
+} else {
+  // If we reach here, we have a key >= 10 chars. 
+  // Let's log if we are using the fallback or the env var for debugging.
+  const isUsingEnv = getValidEnv(import.meta.env.VITE_FIREBASE_API_KEY) !== null;
+  if (!isUsingEnv) {
+    console.warn('Using local firebase-applet-config.json for Firebase configuration because VITE_ environment variables are missing or invalid.');
+  }
 }
 
 const app = initializeApp(config);

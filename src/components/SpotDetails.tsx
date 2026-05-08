@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from './AuthContext';
-import { Star, X, MessageSquare, Send, User } from 'lucide-react';
+import { Star, X, MessageSquare, Send, User, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 
@@ -119,9 +119,13 @@ export function SpotDetails({ spot, onClose }: SpotDetailsProps) {
       
       <div className="relative w-full max-w-lg bg-stone-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
         <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-          <div>
-            <h3 className="text-xl font-serif font-black text-stone-100">{spotName}</h3>
-            <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-sunset-gold/10 flex items-center justify-center text-sunset-gold shrink-0">
+              <Sun className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-xl font-serif font-black text-stone-100">{spotName}</h3>
+              <div className="flex items-center gap-2 mt-1">
               <div className="flex text-sunset-amber">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className={`w-3 h-3 ${i < Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)) ? 'fill-current' : ''}`} />
@@ -130,7 +134,8 @@ export function SpotDetails({ spot, onClose }: SpotDetailsProps) {
               <span className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">{reviews.length} Reviews</span>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
             <X className="w-6 h-6 text-stone-400" />
           </button>
         </div>

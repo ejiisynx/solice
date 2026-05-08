@@ -3,7 +3,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, u
 import { db, handleFirestoreError, OperationType, auth } from '../lib/firebase';
 import { useAuth } from './AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, MessageCircle, Send, Sparkles, Image as ImageIcon, X, MapPin } from 'lucide-react';
+import { Heart, MessageCircle, Send, Sparkles, Image as ImageIcon, X, MapPin, Search, Edit2, Save, Undo } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { GoogleGenAI } from "@google/genai";
 
@@ -23,9 +23,13 @@ interface Post {
 export function CommunityFeed() {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const [newPost, setNewPost] = useState({ photo_url: '', caption: '', location: '' });
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('created_at', 'desc'));
@@ -56,6 +60,23 @@ export function CommunityFeed() {
       user_id: user.uid,
       created_at: serverTimestamp()
     });
+  };
+
+  const handleUpdatePost = async (postId: string) => {
+    if (!user || isUpdating) return;
+    setIsUpdating(true);
+    try {
+      const postRef = doc(db, 'posts', postId);
+      await updateDoc(postRef, {
+        caption: editCaption,
+        updated_at: serverTimestamp() // Optional: add updated_at field
+      });
+      setEditingPostId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `posts/${postId}`);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const generateAICaption = async () => {
@@ -110,6 +131,11 @@ export function CommunityFeed() {
     }
   };
 
+  const filteredPosts = posts.filter(post => 
+    post.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    post.caption.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
@@ -121,6 +147,26 @@ export function CommunityFeed() {
         >
           <Send className="w-5 h-5 -rotate-45" />
         </motion.button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+        <input 
+          type="text"
+          placeholder="Search for users or captions..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm text-stone-100 placeholder:text-stone-500 focus:outline-none focus:border-sunset-amber/50 transition-colors"
+        />
+        {searchQuery && (
+          <button 
+            onClick={() => setSearchQuery('')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/5 rounded-full"
+          >
+            <X className="w-3 h-3 text-stone-500" />
+          </button>
+        )}
       </div>
 
       {/* Post Composer View */}
@@ -201,62 +247,112 @@ export function CommunityFeed() {
 
       {/* Feed List */}
       <div className="space-y-6">
-        {posts.map((post, idx) => (
-          <motion.div 
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="glass-card overflow-hidden"
-          >
-            <div className="p-4 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-sunset-deep/20 flex items-center justify-center text-[10px] font-bold text-sunset-deep">
-                {post.username[0].toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-stone-100">{post.username}</div>
-                <div className="text-[10px] text-stone-500 flex items-center gap-1">
-                  <MapPin className="w-2.5 h-2.5" />
-                  {post.location_name}
+        {filteredPosts.length > 0 ? (
+          filteredPosts.map((post, idx) => (
+            <motion.div 
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="glass-card overflow-hidden"
+            >
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-sunset-deep/20 flex items-center justify-center text-[10px] font-bold text-sunset-deep">
+                  {post.username[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-stone-100">{post.username}</div>
+                  <div className="text-[10px] text-stone-500 flex items-center gap-1">
+                    <MapPin className="w-2.5 h-2.5" />
+                    {post.location_name}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-[10px] text-stone-600 font-medium">
+                    {post.created_at?.seconds ? formatDistanceToNow(new Date(post.created_at.seconds * 1000)) + ' ago' : 'Just now'}
+                  </div>
+                  {user?.uid === post.user_id && !editingPostId && (
+                    <button 
+                      onClick={() => {
+                        setEditingPostId(post.id);
+                        setEditCaption(post.caption);
+                      }}
+                      className="p-1.5 hover:bg-white/5 rounded-lg text-stone-500 hover:text-sunset-amber transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="text-[10px] text-stone-600 font-medium">
-                {post.created_at?.seconds ? formatDistanceToNow(new Date(post.created_at.seconds * 1000)) + ' ago' : 'Just now'}
-              </div>
-            </div>
 
-            <div className="aspect-square w-full bg-stone-900 border-y border-white/5">
-              <img src={post.photo_url} alt="Sunset" className="w-full h-full object-cover" />
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-center gap-4 mb-3">
-                <button 
-                  onClick={() => handleLike(post.id, post.likes_count)}
-                  className="flex items-center gap-1.5 group"
-                >
-                  <Heart className="w-6 h-6 text-stone-400 group-active:scale-125 group-active:text-sunset-deep transition-transform" />
-                  <span className="text-sm font-bold text-stone-400">{post.likes_count}</span>
-                </button>
-                <button className="flex items-center gap-1.5">
-                  <MessageCircle className="w-6 h-6 text-stone-400" />
-                  <span className="text-sm font-bold text-stone-400">0</span>
-                </button>
+              <div className="aspect-square w-full bg-stone-900 border-y border-white/5">
+                <img src={post.photo_url} alt="Sunset" className="w-full h-full object-cover" />
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm text-stone-300 leading-relaxed italic">
-                  {post.is_ai_caption && (
-                    <span className="inline-flex items-center gap-1 bg-sunset-amber/10 text-sunset-amber text-[8px] font-black px-1.5 py-0.5 rounded mr-2 uppercase tracking-tighter">
-                      <Sparkles className="w-2 h-2" /> AI
-                    </span>
+              <div className="p-4">
+                <div className="flex items-center gap-4 mb-3">
+                  <button 
+                    onClick={() => handleLike(post.id, post.likes_count)}
+                    className="flex items-center gap-1.5 group"
+                  >
+                    <Heart className="w-6 h-6 text-stone-400 group-active:scale-125 group-active:text-sunset-deep transition-transform" />
+                    <span className="text-sm font-bold text-stone-400">{post.likes_count}</span>
+                  </button>
+                  <button className="flex items-center gap-1.5">
+                    <MessageCircle className="w-6 h-6 text-stone-400" />
+                    <span className="text-sm font-bold text-stone-400">0</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {editingPostId === post.id ? (
+                    <div className="space-y-3">
+                      <textarea 
+                        value={editCaption}
+                        onChange={(e) => setEditCaption(e.target.value)}
+                        className="w-full bg-white/5 border border-sunset-amber/30 rounded-xl p-3 text-sm text-stone-200 focus:outline-none focus:border-sunset-amber/60 resize-none min-h-[80px]"
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleUpdatePost(post.id)}
+                          disabled={isUpdating}
+                          className="flex-1 bg-sunset-deep text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          {isUpdating ? 'Saving...' : 'Save Changes'}
+                        </button>
+                        <button 
+                          onClick={() => setEditingPostId(null)}
+                          className="px-4 bg-white/5 text-stone-400 text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-white/10"
+                        >
+                          <Undo className="w-3.5 h-3.5" />
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-stone-300 leading-relaxed italic">
+                      {post.is_ai_caption && (
+                        <span className="inline-flex items-center gap-1 bg-sunset-amber/10 text-sunset-amber text-[8px] font-black px-1.5 py-0.5 rounded mr-2 uppercase tracking-tighter">
+                          <Sparkles className="w-2 h-2" /> AI
+                        </span>
+                      )}
+                      "{post.caption}"
+                    </p>
                   )}
-                  "{post.caption}"
-                </p>
+                </div>
               </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="py-20 text-center">
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-600">
+              <Search className="w-8 h-8" />
             </div>
-          </motion.div>
-        ))}
+            <p className="text-stone-500 font-serif italic text-lg">No posts found matching your search</p>
+          </div>
+        )}
       </div>
     </div>
   );
