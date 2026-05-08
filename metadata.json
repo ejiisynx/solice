@@ -1,0 +1,6 @@
+{
+  "name": "Golden Hour Finder",
+  "description": "A location-based application to help you find, predict, and share the perfect sunset moments. Features real-time sun tracking, weather-based quality forecasts, a community feed, and personal sunset journaling.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}

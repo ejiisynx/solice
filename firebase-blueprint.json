@@ -1,0 +1,175 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "avatar_url": { "type": "string" },
+        "streak_count": { "type": "integer" },
+        "last_active": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "email", "created_at"]
+    },
+    "Spot": {
+      "title": "Sunset Spot",
+      "description": "Curated or crowdsourced sunset viewing location",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Hilltop", "Beach", "Promenade", "Urban Rooftop", "Nature Park"] },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "city": { "type": "string" },
+        "description": { "type": "string" },
+        "rating_avg": { "type": "number" },
+        "rating_count": { "type": "integer" },
+        "submitted_by": { "type": "string" },
+        "approved": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "latitude", "longitude", "city", "created_at"]
+    },
+    "Post": {
+      "title": "Community Post",
+      "description": "A public post sharing a sunset moment",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "username": { "type": "string" },
+        "photo_url": { "type": "string" },
+        "caption": { "type": "string" },
+        "ai_caption": { "type": "string" },
+        "is_ai_caption": { "type": "boolean" },
+        "mood": { "type": "string" },
+        "location_name": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "quality_score": { "type": "integer" },
+        "sunset_time": { "type": "string", "format": "date-time" },
+        "likes_count": { "type": "integer" },
+        "comments_count": { "type": "integer" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "photo_url", "created_at"]
+    },
+    "Like": {
+      "title": "Post Like",
+      "description": "Represents a like on a post",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "created_at"]
+    },
+    "JournalEntry": {
+      "title": "Journal Entry",
+      "description": "A private entry documenting the user's sunset experience",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "photo_url": { "type": "string" },
+        "caption": { "type": "string" },
+        "mood_emoji": { "type": "string" },
+        "quality_score": { "type": "integer" },
+        "sunset_time": { "type": "string", "format": "date-time" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "created_at"]
+    },
+    "Badge": {
+      "title": "User Badge",
+      "description": "An achievement earned by the user",
+      "type": "object",
+      "properties": {
+        "badge_key": { "type": "string" },
+        "earned_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["badge_key", "earned_at"]
+    },
+    "PushSubscription": {
+      "title": "Push Subscription",
+      "description": "Web Push subscription details",
+      "type": "object",
+      "properties": {
+        "endpoint": { "type": "string" },
+        "p256dh": { "type": "string" },
+        "auth": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["endpoint", "p256dh", "auth", "created_at"]
+    },
+    "SpotReview": {
+      "title": "Spot Review",
+      "description": "User review and rating for a sunset spot",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "username": { "type": "string" },
+        "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "rating", "created_at"]
+    },
+    "NotificationPrefs": {
+      "title": "Notification Preferences",
+      "description": "User's notification settings",
+      "type": "object",
+      "properties": {
+        "golden_hour": { "type": "boolean" },
+        "quality_forecast": { "type": "boolean" },
+        "journal_reminder": { "type": "boolean" },
+        "friends_spots": { "type": "boolean" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["updated_at"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/users/{userId}/badges/{badgeId}": {
+      "schema": "Badge",
+      "description": "Badges earned by the user"
+    },
+    "/users/{userId}/journal/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "User's private sunset journal"
+    },
+    "/users/{userId}/push_subscriptions/{subId}": {
+      "schema": "PushSubscription",
+      "description": "Web Push subscriptions for the user"
+    },
+    "/users/{userId}/notification_prefs/default": {
+      "schema": "NotificationPrefs",
+      "description": "User notification preferences"
+    },
+    "/spots/{spotId}": {
+      "schema": "Spot",
+      "description": "Curated sunset viewing spots"
+    },
+    "/spots/{spotId}/reviews/{reviewId}": {
+      "schema": "SpotReview",
+      "description": "User reviews for a specific spot"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Public community posts"
+    },
+    "/posts/{postId}/likes/{userId}": {
+      "schema": "Like",
+      "description": "Likes on a post"
+    },
+    "/admins/{userId}": {
+      "schema": { "type": "object", "properties": { "role": { "type": "string" } } },
+      "description": "Admin roles"
+    }
+  }
+}
