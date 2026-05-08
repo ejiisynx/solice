@@ -3,14 +3,21 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfigRaw from '../../firebase-applet-config.json';
 
+const getValidEnv = (val: any) => {
+  if (typeof val === 'string' && val !== '' && val !== 'undefined' && val !== 'null') {
+    return val;
+  }
+  return null;
+};
+
 const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigRaw.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigRaw.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigRaw.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigRaw.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigRaw.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigRaw.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigRaw as any).firestoreDatabaseId
+  apiKey: getValidEnv(import.meta.env.VITE_FIREBASE_API_KEY) || firebaseConfigRaw.apiKey,
+  authDomain: getValidEnv(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || firebaseConfigRaw.authDomain,
+  projectId: getValidEnv(import.meta.env.VITE_FIREBASE_PROJECT_ID) || firebaseConfigRaw.projectId,
+  storageBucket: getValidEnv(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || firebaseConfigRaw.storageBucket,
+  messagingSenderId: getValidEnv(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || firebaseConfigRaw.messagingSenderId,
+  appId: getValidEnv(import.meta.env.VITE_FIREBASE_APP_ID) || firebaseConfigRaw.appId,
+  firestoreDatabaseId: getValidEnv(import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID) || (firebaseConfigRaw as any).firestoreDatabaseId
 };
 
 // Diagnostic check (Safe to log keys prefix only)
